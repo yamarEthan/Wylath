@@ -5,14 +5,14 @@
 U64 bitboards[12]; //each piece type will have their own bitboard; order is P, N, B, R, Q, K, p, n, b, r, q, k
 
 int side; //side to move
-int enPassant = NO_SQUARE; //en Passant square
-int castle; //castling rights
+int enPassant; //en Passant square
+int castlingRights; //castling rights
 
 U64 positionKey; //current set up of Board
 
-int repetition; //how many moves (full ply) have gone without a capture or pawn push; used for the fifty move rule
+int fullMoves; //number of full plys played in total in the game
 
-int ply; //half move; white/black plays a move but not the other side
+int ply; //half move; white/black plays a move but not the other side; resets after a pawn push or piece capture; used for 50-move draw rule
 
 /*FEN has 6 fields:
     1. Piece Placement; lowercase for black, uppercase for white
@@ -24,12 +24,85 @@ int ply; //half move; white/black plays a move but not the other side
 
     Example: Starting Position FEN is: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 */
+int charToPiece[] = {
+    ['P'] = P,
+    ['N'] = N,
+    ['B'] = B,
+    ['R'] = R,
+    ['Q'] = Q,
+    ['K'] = K,
+    ['p'] = p,
+    ['n'] = n,
+    ['b'] = b,
+    ['r'] = r,
+    ['q'] = q,
+    ['k'] = k
+};
+
+void parse_fen(char *fen) { //may have issues with unknown characters or overflow
+    for(int rank = 7; rank >= 0; rank--) {
+        for(int file = 0; file < 8; file++) {
+            int square = (rank * 8) + file;
+            if((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
+                int piece = charToPiece[*fen];
+                set_bit(bitboards[piece], square);
+                fen++;
+            }
+            if((*fen >= '0' && *fen <= '9')) {
+                int blanks = *fen - '0'; //converts char to int
+                file += blanks;
+                fen++;
+            }
+            if (*fen == '/') {
+                fen++;
+            }
+        }
+    }
+
+    fen++; //move to Active Color field
+    (*fen == 'w') ? (side = white) : (side = black);
+
+    fen += 2; //move to Castling Rights field
+    while(*fen != ' ') {
+        switch(*fen) {
+            case 'K': castlingRights |= wk; break;
+            case 'Q': castlingRights |= wq; break;
+            case 'k': castlingRights |= bk; break;
+            case 'q': castlingRights |= bq; break;
+            case '-': break;
+        }
+        fen++;
+    }
+
+    fen++; //move to enpassant field
+    if(*fen != '-') {
+        int file = *fen - 'a';
+        fen++;
+        int rank = *fen - '0';
+        enPassant = ((rank - 1) * 8) + file; //subtract one due to zero based indexing
+        //printf("\nEn Passant Square: %d\n", enPassant); //keep for now just in case
+    } else {
+        enPassant = NO_SQUARE;
+    }
+
+    fen += 2; //move to halfmove field
+    if(*fen != ' ') {
+        if(*(fen + 1) != ' ') {
+            if(*(fen + 2) != ' ') {
+                ply = 100; //if there's three digits, it's either >= 100, and fifty-move draw rule applies in any case
+            } else {
+                ply = ((*fen++ - '0') * 10) + (*fen - '0');
+            }
+        } else {
+            ply = *fen - '0';
+        }
+    } else {
+        ply = 0;
+    }
+
+    //skipping fullmove number for now as there may be cases where it goes all the way to four digit counts
+}
 
 int main() {
-    U64 bitboard = 0LL;
-    set_bit(bitboard, A1);
-    set_bit(bitboard, A7);
-    set_bit(bitboard, C6);
-    print_bitboard(bitboard);
-    return 0;
+    parse_fen(TEST_POSITION);
 }
