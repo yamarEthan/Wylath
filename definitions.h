@@ -7,7 +7,6 @@ typedef unsigned long long U64;
 #define BRD_SQ_NUM 64
 
 #define START_POSITION "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-#define TEST_POSITION "1R6/8/8/8/8/8/k1K5/8 w - - 123 59"
 
 typedef enum {
     A1, B1, C1, D1, E1, F1, G1, H1, //0, 1, 2, 3, 4, 5, 6, 7,
@@ -23,7 +22,7 @@ typedef enum {
 
 typedef enum {P, N, B, R, Q, K, p, n, b, r, q, k} Piece; //pieces; uppercase for white pieces, lowercase for black pieces
 
-typedef enum {white, black, both} Side; //side to move
+typedef enum {white, black} Side; //side to move
 
 typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 
@@ -32,9 +31,10 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 #define get_bit(bitboard, square) ((bitboard) & (1ULL << (square))) //returns 1 if there is a 1 at that bit in the bitboard; else 0
 #define pop_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square))) //~ inverts the mask and &= sets the one at square to 0; ignores other bits
 
+#define NOT_A_FILE 18374403900871474942ULL //bitboard where file A is all 0s and the rest of the bits are 1s
+
+#define NOT_H_FILE 9187201950435737471ULL //file H is all 0s, rest are 1s; used for pawn attacks mask
+
 #endif
 
-
-
-//today, i want to print a board given a FEN string. this means that we parse through the string and update all the bitboards accordingly.
-//finally, we fully print the entire board with all the pieces. instead of unique ascii chars, we will use lowercase and uppercase letters for pieces
+//I now want to deal with move generation. First I will deal with attack generation

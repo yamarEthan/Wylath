@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include "definitions.h"
 #include "display.h"
+#include "attacks.h"
 
-U64 bitboards[12]; //each piece type will have their own bitboard; order is P, N, B, R, Q, K, p, n, b, r, q, k
+//naming schemes:
+//variables: camelCase
+//functions: lowercase_underline_spaced
+
+U64 pieceBitboards[12]; //each piece type will have their own bitboard; order is P, N, B, R, Q, K, p, n, b, r, q, k
 
 int side; //side to move
 int enPassant; //en Passant square
@@ -24,7 +29,7 @@ int ply; //half move; white/black plays a move but not the other side; resets af
 
     Example: Starting Position FEN is: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 */
-int charToPiece[] = {
+int charToPiece[] = { //useful for parsing a FEN string
     ['P'] = P,
     ['N'] = N,
     ['B'] = B,
@@ -39,13 +44,14 @@ int charToPiece[] = {
     ['k'] = k
 };
 
+//given a fen string: sets the piece bitboards, side, enPassant, castling rights, and fullmove and ply counter
 void parse_fen(char *fen) { //may have issues with unknown characters or overflow
     for(int rank = 7; rank >= 0; rank--) {
         for(int file = 0; file < 8; file++) {
             int square = (rank * 8) + file;
             if((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
                 int piece = charToPiece[*fen];
-                set_bit(bitboards[piece], square);
+                set_bit(pieceBitboards[piece], square);
                 fen++;
             }
             if((*fen >= '0' && *fen <= '9')) {
@@ -104,5 +110,15 @@ void parse_fen(char *fen) { //may have issues with unknown characters or overflo
 }
 
 int main() {
-    parse_fen(TEST_POSITION);
+    /*parse_fen(START_POSITION);
+    for(int i = 0; i < 12; i++) {
+        print_bitboard(pieceBitboards[i]);
+    }
+    */
+
+    for(int i = 48; i <= 55; i++) { //prints all attack masks of starting black pawns
+        U64 Pawn = pawn_attacks_mask(i, black);
+        print_bitboard(Pawn);
+    }
+
 }

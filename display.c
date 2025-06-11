@@ -15,5 +15,6 @@ void print_bitboard(U64 bitboard) {
         printf("\n");
     }
     printf("\n     a b c d e f g h\n");
+    printf("Unsigned Decimal Number Form: %llu\n", bitboard);
     printf("----------------------\n");
 }
