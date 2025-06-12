@@ -116,9 +116,23 @@ int main() {
     }
     */
 
-    for(int i = 48; i <= 55; i++) { //prints all attack masks of starting black pawns
+    /*for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+        printf("\nSquare: %d\n", i);
         U64 Pawn = pawn_attacks_mask(i, black);
         print_bitboard(Pawn);
-    }
+    } 
+    */
 
+    /*for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+        printf("\nSquare: %d\n", i);
+        U64 Knight = knight_attacks_mask(i);
+        print_bitboard(Knight);
+    }
+    */
+
+    for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+        printf("\nSquare: %d\n", i);
+        U64 King = king_attacks_mask(i);
+        print_bitboard(King);
+    }
 }
