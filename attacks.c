@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include "definitions.h"
 #include "attacks.h"
-#include "display.h"
 
 U64 pawnAttacksTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
+U64 knightAttacksTable[64];
+U64 kingAttacksTable[64];
 
 U64 pawn_attacks_mask(int square, int side) { //have yet to initialize pawnAttacksTable using this function for all squares and sides
     U64 bitboard = 0ULL; //empty bitboard
@@ -56,6 +57,59 @@ U64 king_attacks_mask(int square) {
     attackBitboard |= (bitboard << 8);
     attackBitboard |= (bitboard << 9) & NOT_A_FILE;
 
+    return attackBitboard;
+}
+
+U64 bishop_attacks_mask(int square) { //first step for attack table
+    U64 attackBitboard = 0ULL;
+
+    //imagine a bishop on A1;it will only target every 9th bit
+    //imagine a bishop on B2; it will target every 9th bit plus 02 and 16
+    //..
+    //imagine a bishop on E4 (28); it will target every 9th bit and every 7th bit
+    //pattern is every 9th bit for the \ diagonal and every 7th bit for the / diagonal
+    int rank, file;
+    int targetRank = square / 8;
+    int targetFile = square % 8;
+
+    //we are viewing this from black's perspective as a1 is at 0 and h8 is at 63
+    for(rank = targetRank + 1, file = targetFile + 1; rank < 8 && file < 8; rank++, file++) { //given a square, set every positive 9th bit; SE direction
+        attackBitboard |= (1ULL << ((rank * 8) + file));
+    }
+
+    for(rank = targetRank + 1, file = targetFile - 1; rank < 8 && file >= 0; rank++, file--) { //SW direction
+        attackBitboard |= (1ULL << ((rank * 8) + file));
+    }
+
+    for(rank = targetRank - 1, file = targetFile + 1; rank >= 0 && file < 8; rank--, file++) { //NE
+        attackBitboard |= (1ULL << ((rank * 8) + file));
+    }
+
+    for(rank = targetRank - 1, file = targetFile - 1; rank >= 0 && file >= 0; rank--, file--) { //NW direction
+        attackBitboard |= (1ULL << ((rank * 8) + file));
+    }
+
+    return attackBitboard;
+}
+
+U64 rook_attacks_mask(int square) {
+    U64 attackBitboard = 0ULL;
+
+    //imagine a rook on A1
+    //it targets the entire rank and file it's at; only two for loops?
+
+    int targetRank = square / 8;
+    int targetFile = square % 8;
+
+    for(int file = 0; file < 8; file++) {
+        attackBitboard |= (1ULL << ((targetRank * 8) + file));
+    }
+
+    for(int rank = 0; rank < 8; rank++) {
+        attackBitboard |= (1ULL << ((rank * 8) + targetFile));
+    }
+
+    pop_bit(attackBitboard, square);
     return attackBitboard;
 }
 /*

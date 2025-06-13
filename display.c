@@ -18,3 +18,17 @@ void print_bitboard(U64 bitboard) {
     printf("Unsigned Decimal Number Form: %llu\n", bitboard);
     printf("----------------------\n");
 }
+
+
+/*
+  8  0 0 0 0 0 0 0 0
+  7  0 0 0 0 0 0 0 0
+  6  0 0 0 0 0 0 0 0
+  5  0 0 0 0 0 0 0 0
+  4  0 0 0 0 0 0 0 0
+  3  0 0 0 0 0 0 0 0
+  2  0 0 0 1 0 0 0 0
+  1  0 0 0 0 0 0 0 0
+
+     a b c d e f g h
+*/

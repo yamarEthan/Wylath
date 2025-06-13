@@ -9,4 +9,8 @@ U64 knight_attacks_mask(int square);
 
 U64 king_attacks_mask(int square);
 
+U64 bishop_attacks_mask(int square);
+
+U64 rook_attacks_mask(int square);
+
 #endif
