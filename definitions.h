@@ -33,6 +33,8 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 #define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square))) //sets the bit at bitboard bit "square" (zero-based indexing) to 1
 #define get_bit(bitboard, square) ((bitboard) & (1ULL << (square))) //returns 1 if there is a 1 at that bit in the bitboard; else 0
 #define pop_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square))) //~ inverts the mask and &= sets the one at square to 0; ignores other bits
+#define count_bits(bitboard) __builtin_popcountll(bitboard) //returns how manys 1s are in a bitboard
+#define get_lsb_index(bitboard) __builtin_ctzll(bitboard)
 
 #define NOT_A_FILE 18374403900871474942ULL //bitboard where file A is all 0s and the rest of the bits are 1s
 #define NOT_H_FILE 9187201950435737471ULL //file H is all 0s, rest are 1s; used for pawn attacks mask
@@ -41,4 +43,5 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 
 #endif
 
-//I now want to deal with move generation. First I will deal with attack generation
+//The next step to deal with is move generation of sliding pieces (rooks and bishops). Since they can be blocked, I need to take that in account when generating
+//their attack tables. I must use this method called Magic Bitboards to generate their legal moves

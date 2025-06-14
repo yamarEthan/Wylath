@@ -2,6 +2,28 @@
 #include "definitions.h"
 #include "attacks.h"
 
+const int bishopBitsSeen[64] = { //given a bishop on a square, this tells you how many squares it looks at
+    6, 5, 5, 5, 5, 5, 5, 6, 
+    5, 5, 5, 5, 5, 5, 5, 5, 
+    5, 5, 7, 7, 7, 7, 5, 5, 
+    5, 5, 7, 9, 9, 7, 5, 5, 
+    5, 5, 7, 9, 9, 7, 5, 5, 
+    5, 5, 7, 7, 7, 7, 5, 5, 
+    5, 5, 5, 5, 5, 5, 5, 5, 
+    6, 5, 5, 5, 5, 5, 5, 6
+};
+
+const int rookBitsSeen[64] = { //for rooks
+    12, 11, 11, 11, 11, 11, 11, 12, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    12, 11, 11, 11, 11, 11, 11, 12
+};
+
 U64 pawnAttacksTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
 U64 knightAttacksTable[64];
 U64 kingAttacksTable[64];
@@ -59,20 +81,64 @@ U64 king_attacks_mask(int square) {
 
     return attackBitboard;
 }
-
-U64 bishop_attacks_mask(int square, U64 blockersBitboard) { //first step for attack table
+U64 bishop_blockers_mask(int square) { //generates all squares a bishop sees minus the border squares
     U64 attackBitboard = 0ULL;
 
-    //imagine a bishop on A1;it will only target every 9th bit
-    //imagine a bishop on B2; it will target every 9th bit plus 02 and 16
-    //..
-    //imagine a bishop on E4 (28); it will target every 9th bit and every 7th bit
-    //pattern is every 9th bit for the \ diagonal and every 7th bit for the / diagonal
     int rank, file;
     int targetRank = square / 8;
     int targetFile = square % 8;
 
-    //we are viewing this from black's perspective as a1 is at 0 and h8 is at 63
+    for(rank = targetRank + 1, file = targetFile + 1; rank < 7 && file < 7; rank++, file++) {attackBitboard |= (1ULL << ((rank * 8) + file));}
+    for(rank = targetRank + 1, file = targetFile - 1; rank < 7 && file > 0; rank++, file--) {attackBitboard |= (1ULL << ((rank * 8) + file));}
+    for(rank = targetRank - 1, file = targetFile + 1; rank > 0 && file < 7; rank--, file++) {attackBitboard |= (1ULL << ((rank * 8) + file));}
+    for(rank = targetRank - 1, file = targetFile - 1; rank > 0 && file > 0; rank--, file--) {attackBitboard |= (1ULL << ((rank * 8) + file));}
+
+    return attackBitboard;
+}
+
+U64 rook_blockers_mask(int square) { //same as above but for rooks
+    U64 attackBitboard = 0ULL;
+    int rank, file;
+    int targetRank = square / 8;
+    int targetFile = square % 8;
+
+    for(file = targetFile + 1; file < 7; file++) {attackBitboard |= (1ULL << ((targetRank * 8) + file));}
+    for(file = targetFile - 1; file > 0; file--) {attackBitboard |= (1ULL << ((targetRank * 8) + file));}
+    for(rank = targetRank + 1; rank < 7; rank++) {attackBitboard |= (1ULL << ((rank * 8) + targetFile));}
+    for(rank = targetRank - 1; rank > 0; rank--) {attackBitboard |= (1ULL << ((rank * 8) + targetFile));}
+
+    return attackBitboard;
+}
+
+U64 get_blockers_bitboard(int index, int bitsInMask, U64 blockersMask) {
+    /*returns one of the possible blockerBitboard combinations given its index, number of bits, and the blockersMask
+        For example, let's look at a rook on A1. It sees 12 squares for a total of 4096 possible blockerBoards. At index 0, there is no pieces blocking
+        its view. At index 4095, there's a piece at every single square it looks at
+
+        bitsInMask can be found using count_bits
+
+        blockersMask is the blockers mask for a given square and piece type
+    */
+    U64 blockersBitboard = 0ULL;
+
+    for(int i = 0; i < bitsInMask; i++) {
+        int square = get_lsb_index(blockersMask);
+        pop_bit(blockersMask, square);
+        
+        if(index & (1 << i)) { //if bit i is a 1 in index, we set bit (square) as a 1 in the blockersBitboard
+            blockersBitboard |= (1ULL << square);
+        }
+    }
+    
+    return blockersBitboard;
+}
+
+U64 bishop_attacks_mask(int square, U64 blockersBitboard) { //given a bitboard of blockers, generate the possible moves
+    U64 attackBitboard = 0ULL;
+    int rank, file;
+    int targetRank = square / 8;
+    int targetFile = square % 8;
+
     for(rank = targetRank + 1, file = targetFile + 1; rank < 8 && file < 8; rank++, file++) { //given a square, set every positive 9th bit; SE direction
         attackBitboard |= (1ULL << ((rank * 8) + file));
         if((1ULL << ((rank * 8) + file)) & blockersBitboard) break; //if that square is occupied in blockersBitboard, return non-zero and break
@@ -144,4 +210,23 @@ U64 rook_attacks_mask(int square, U64 blockersBitboard) { //have to fix this
     
     the << operator shifts bits to the left heading to MSB
     the >> shifts bit to the right heading to LSB
+*/
+
+/*
+How do I generate the magic bitboard numbers?
+
+I need three things:
+
+1.  The blocker masks: this is similar to what we have been doing for the other pieces, finding all the possible places the piece can go to given a square
+    MINUS THE EDGES (ignore A,H file and 1,8 rank). Why? The piece can't go past them anyways so no need to calculate possible blockers there.
+
+2.  The blocker boards: A rook on E4, for example, can see 14 squares. The total possible combination of pieces blocking the rook is 2^14 which is huge.
+    By ignoring the border squares, we reduce it to 2^10, much easier. The blocker boards are a subset of the blocker masks as the pieces are always inside
+    the square the pieces can see. We don't actually need a function for this we just iterate from 0 to 2^n.
+    
+3.  The move board: This is the code we have above right now, feeding it the blocker boards to get the move board.
+
+Step 1 is done. Pretty easy.
+
+Step 2 is where it gets hard. 
 */

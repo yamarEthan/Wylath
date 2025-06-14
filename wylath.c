@@ -50,7 +50,7 @@ void parse_fen(char *fen) { //may have issues with unknown characters or overflo
         for(int file = 0; file < 8; file++) {
             int square = (rank * 8) + file;
             if((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
-                int piece = charToPiece[*fen];
+                int piece = charToPiece[(unsigned char)*fen];
                 set_bit(pieceBitboards[piece], square);
                 fen++;
             }
@@ -97,7 +97,9 @@ void parse_fen(char *fen) { //may have issues with unknown characters or overflo
             if(*(fen + 2) != ' ') {
                 ply = 100; //if there's three digits, it's either >= 100, and fifty-move draw rule applies in any case
             } else {
-                ply = ((*fen++ - '0') * 10) + (*fen - '0');
+                int tens = *fen++ - '0';
+                int units = *fen - '0';
+                ply = (tens * 10) + units;
             }
         } else {
             ply = *fen - '0';
@@ -113,8 +115,8 @@ int main() {
     /*parse_fen(START_POSITION);
     for(int i = 0; i < 12; i++) {
         print_bitboard(pieceBitboards[i]);
-    }
-    */
+    }*/
+    
 
     /*for(int i = 0; i < 64; i++) { //prints all attack masks of black pawns
         printf("\nSquare: %d\n", i);
@@ -137,17 +139,19 @@ int main() {
     }
     */
 
-    U64 block = 0ULL;
-    set_bit(block, B4);
-    set_bit(block, F4);
-    set_bit(block, D2);
-    set_bit(block, D6);
-
-    for(int i = 0; i < 64; i++) { //prints all attack masks of bishops and rooks
-        printf("\nSquare: %d\n", i);
-        U64 Bishop = bishop_attacks_mask(i, block);
-        U64 Rook = rook_attacks_mask(i, block);
-        print_bitboard(Rook);
-        print_bitboard(Bishop);
+    /*for(int i = 0; i < 64; i++) { //prints all attack masks of bishops and rooks
+        //printf("\nSquare: %d\n", i);
+        //U64 Bishop = bishop_blockers_mask(i);
+        U64 Rook = rook_blockers_mask(i);
+        //print_bitboard(Rook);
+        printf("\n%d\n", count_bits(Rook));
+        //printf("\n%d", get_lsb_index(Rook));
+        //print_bitboard(Bishop);
+    }*/
+    
+    U64 Rook = rook_blockers_mask(A1);
+    for(int i = 4080; i < 4096; i++) {
+        U64 permutation = get_blockers_bitboard(i, count_bits(Rook), Rook);
+        print_bitboard(permutation);
     }
 }

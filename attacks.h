@@ -9,6 +9,12 @@ U64 knight_attacks_mask(int square);
 
 U64 king_attacks_mask(int square);
 
+U64 bishop_blockers_mask(int square);
+
+U64 rook_blockers_mask(int square);
+
+U64 get_blockers_bitboard(int index, int bitsInMask, U64 blockersMask);
+
 U64 bishop_attacks_mask(int square, U64 blockersBitboard);
 
 U64 rook_attacks_mask(int square, U64 blockersBitboard);

@@ -12,7 +12,7 @@ void print_bitboard(U64 bitboard) {
                 if(!file) {printf("  %d ", rank + 1);}
                 //printf(" %d", get_bit(bitboard, square) ? 1 : 0); original print bit but I want to add some color to the printing of the 1s and 0s
                 int bit = get_bit(bitboard, square) ? 1 : 0;
-                if(bit) {printf(" " BRIGHT_GREEN "1" RESET);} else {printf(" 0");}
+                if(bit) {printf(" " BRIGHT_GREEN "1" RESET);} else {printf(RESET " 0");}
         }
         printf("\n");
     }
@@ -29,7 +29,7 @@ void print_bitboard(U64 bitboard) {
   5  0 0 0 0 0 0 0 0
   4  0 0 0 0 0 0 0 0
   3  0 0 0 0 0 0 0 0
-  2  0 0 0 1 0 0 0 0
+  2  0 0 0 0 0 0 0 0
   1  0 0 0 0 0 0 0 0
 
      a b c d e f g h
