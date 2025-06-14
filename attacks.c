@@ -60,7 +60,7 @@ U64 king_attacks_mask(int square) {
     return attackBitboard;
 }
 
-U64 bishop_attacks_mask(int square) { //first step for attack table
+U64 bishop_attacks_mask(int square, U64 blockersBitboard) { //first step for attack table
     U64 attackBitboard = 0ULL;
 
     //imagine a bishop on A1;it will only target every 9th bit
@@ -75,41 +75,57 @@ U64 bishop_attacks_mask(int square) { //first step for attack table
     //we are viewing this from black's perspective as a1 is at 0 and h8 is at 63
     for(rank = targetRank + 1, file = targetFile + 1; rank < 8 && file < 8; rank++, file++) { //given a square, set every positive 9th bit; SE direction
         attackBitboard |= (1ULL << ((rank * 8) + file));
+        if((1ULL << ((rank * 8) + file)) & blockersBitboard) break; //if that square is occupied in blockersBitboard, return non-zero and break
     }
 
     for(rank = targetRank + 1, file = targetFile - 1; rank < 8 && file >= 0; rank++, file--) { //SW direction
         attackBitboard |= (1ULL << ((rank * 8) + file));
+        if((1ULL << ((rank * 8) + file)) & blockersBitboard) break;
     }
 
     for(rank = targetRank - 1, file = targetFile + 1; rank >= 0 && file < 8; rank--, file++) { //NE
         attackBitboard |= (1ULL << ((rank * 8) + file));
+        if((1ULL << ((rank * 8) + file)) & blockersBitboard) break;
     }
 
     for(rank = targetRank - 1, file = targetFile - 1; rank >= 0 && file >= 0; rank--, file--) { //NW direction
         attackBitboard |= (1ULL << ((rank * 8) + file));
+        if((1ULL << ((rank * 8) + file)) & blockersBitboard) break;
     }
 
     return attackBitboard;
 }
 
-U64 rook_attacks_mask(int square) {
+U64 rook_attacks_mask(int square, U64 blockersBitboard) { //have to fix this
     U64 attackBitboard = 0ULL;
 
     //imagine a rook on A1
-    //it targets the entire rank and file it's at; only two for loops?
-
+    //it targets the entire rank and file it's at; only two for loops? no because we want to check for blockers in each direction starting from the square
+    int rank, file;
     int targetRank = square / 8;
     int targetFile = square % 8;
 
-    for(int file = 0; file < 8; file++) {
+    //again from black's perspective
+    for(file = targetFile + 1; file < 8; file++) { //heading east
         attackBitboard |= (1ULL << ((targetRank * 8) + file));
+        if((1ULL << ((targetRank * 8) + file)) & blockersBitboard) break;
     }
 
-    for(int rank = 0; rank < 8; rank++) {
+    for(file = targetFile - 1; file >= 0; file--) { //west
+        attackBitboard |= (1ULL << ((targetRank * 8) + file));
+        if((1ULL << ((targetRank * 8) + file)) & blockersBitboard) break;
+    }
+
+    for(rank = targetRank + 1; rank < 8; rank++) { //south
         attackBitboard |= (1ULL << ((rank * 8) + targetFile));
+        if((1ULL << ((rank * 8) + targetFile)) & blockersBitboard) break;
     }
 
-    pop_bit(attackBitboard, square);
+    for(rank = targetRank - 1; rank >= 0; rank--) { //north
+        attackBitboard |= (1ULL << ((rank * 8) + targetFile));
+        if((1ULL << ((rank * 8) + targetFile)) & blockersBitboard) break;
+    }
+
     return attackBitboard;
 }
 /*

@@ -116,36 +116,38 @@ int main() {
     }
     */
 
-    /*for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+    /*for(int i = 0; i < 64; i++) { //prints all attack masks of black pawns
         printf("\nSquare: %d\n", i);
         U64 Pawn = pawn_attacks_mask(i, black);
         print_bitboard(Pawn);
     } 
     */
 
-    /*for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+    /*for(int i = 0; i < 64; i++) {
         printf("\nSquare: %d\n", i);
         U64 Knight = knight_attacks_mask(i);
         print_bitboard(Knight);
     }
     */
 
-    /*for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+    /*for(int i = 0; i < 64; i++) {
         printf("\nSquare: %d\n", i);
         U64 King = king_attacks_mask(i);
         print_bitboard(King);
     }
     */
 
-    /*for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
-        printf("\nSquare: %d\n", i);
-        U64 Bishop = bishop_attacks_mask(i);
-        print_bitboard(Bishop);
-    } */
+    U64 block = 0ULL;
+    set_bit(block, B4);
+    set_bit(block, F4);
+    set_bit(block, D2);
+    set_bit(block, D6);
 
-    for(int i = 0; i < 64; i++) { //prints all attack masks of starting black pawns
+    for(int i = 0; i < 64; i++) { //prints all attack masks of bishops and rooks
         printf("\nSquare: %d\n", i);
-        U64 Rook = rook_attacks_mask(i);
+        U64 Bishop = bishop_attacks_mask(i, block);
+        U64 Rook = rook_attacks_mask(i, block);
         print_bitboard(Rook);
+        print_bitboard(Bishop);
     }
 }
