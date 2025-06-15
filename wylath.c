@@ -148,10 +148,4 @@ int main() {
         //printf("\n%d", get_lsb_index(Rook));
         //print_bitboard(Bishop);
     }*/
-    
-    U64 Rook = rook_blockers_mask(A1);
-    for(int i = 4080; i < 4096; i++) {
-        U64 permutation = get_blockers_bitboard(i, count_bits(Rook), Rook);
-        print_bitboard(permutation);
-    }
 }
