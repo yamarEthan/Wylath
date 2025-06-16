@@ -179,6 +179,30 @@ U64 rook_attacks_mask(int square, U64 blockerBitboard) { //have to fix this
     return attackBitboard;
 }
 
+void init_sliders_attacks(int bishop) { //let's say we initialize the bishop attacks
+    for(int square = 0; square < 64; square++) { //for every square,
+        bishopBlockersMask[square] = bishop_blockers_mask(square); //set the blocker mask of that square; the bitboard where every square the bishop sees is a 1 except
+        rookBlockersMask[square] = rook_blockers_mask(square); //if it's an edge square
+        
+        U64 blockersMask = bishop ? bishopBlockersMask[square] : rookBlockersMask[square]; //get that blocker mask
+        int bitsSeen = count_bits(blockersMask); //get how many 1s are in that mask
+        int blockersIndices = 1 << bitsSeen; //gets you 2^bitsSeen, aka the total possible permutation of blockers bitboards
+
+        for(int i = 0; i < blockersIndices; i++) { //for every possible permutation of blockers bitboards
+            if(bishop) {
+                U64 blockersBitboard = get_blockers_bitboard(i, bitsSeen, blockersMask); //get one specific blockers bitboard
+                int magicIndex = (blockersIndices * BishopMagicNumbers[square]) >> (64 - bishopBitsSeen[square]); //get the magicIndex using magic numbers we found
+                bishopAttacksTable[square][magicIndex] = bishop_attacks_mask(square, blockersBitboard); //store the corresponding attack bitboard in the array
+            } else {
+                U64 blockersBitboard = get_blockers_bitboard(i, bitsSeen, blockersMask);
+                int magicIndex = (blockersIndices * RookMagicNumbers[square]) >> (64 - rookBitsSeen[square]);
+                rookAttacksTable[square][magicIndex] = rook_attacks_mask(square, blockersBitboard);
+            }
+        } //repeat this for all permutations and all squares
+    } //the magic numbers is essentially a hashing function to make sure no collision occurs in each square's array
+}
+
+
 /*
     A1, B1, C1, D1, E1, F1, G1, H1,     00, 01, 02, 03, 04, 05, 06, 07,
     A2, B2, C2, D2, E2, F2, G2, H2,     08, 09, 10, 11, 12, 13, 14, 15,
@@ -197,7 +221,7 @@ U64 rook_attacks_mask(int square, U64 blockerBitboard) { //have to fix this
     the >> shifts bit to the right heading to LSB
 */
 
-const int bishopBitsSeen[64] = { //given a bishop on a square, this tells you how many squares it looks at
+int bishopBitsSeen[64] = { //given a bishop on a square, this tells you how many squares it looks at
     6, 5, 5, 5, 5, 5, 5, 6, 
     5, 5, 5, 5, 5, 5, 5, 5, 
     5, 5, 7, 7, 7, 7, 5, 5, 
@@ -208,7 +232,7 @@ const int bishopBitsSeen[64] = { //given a bishop on a square, this tells you ho
     6, 5, 5, 5, 5, 5, 5, 6
 };
 
-const int rookBitsSeen[64] = { //for rooks
+int rookBitsSeen[64] = { //for rooks
     12, 11, 11, 11, 11, 11, 11, 12, 
     11, 10, 10, 10, 10, 10, 10, 11, 
     11, 10, 10, 10, 10, 10, 10, 11, 

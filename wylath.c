@@ -138,14 +138,5 @@ int main() {
         print_bitboard(King);
     }
     */
-
-    /*for(int i = 0; i < 64; i++) { //prints all attack masks of bishops and rooks
-        //printf("\nSquare: %d\n", i);
-        //U64 Bishop = bishop_blockers_mask(i);
-        U64 Rook = rook_blockers_mask(i);
-        //print_bitboard(Rook);
-        printf("\n%d\n", count_bits(Rook));
-        //printf("\n%d", get_lsb_index(Rook));
-        //print_bitboard(Bishop);
-    }*/
+   init_sliders_attacks(1);
 }

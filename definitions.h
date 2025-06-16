@@ -41,6 +41,22 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 #define NOT_AB_FILE 18229723555195321596ULL //used for knight
 #define NOT_GH_FILE 4557430888798830399ULL //attacks mask
 
+extern U64 bishopBlockersMask[64];
+extern U64 rookBlockersMask[64];
+
+extern U64 bishopAttacksTable[64][512];
+extern U64 rookAttacksTable[64][4096];
+
+extern U64 pawnAttacksTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
+extern U64 knightAttacksTable[64];
+extern U64 kingAttacksTable[64];
+
+extern int bishopBitsSeen[64];
+extern int rookBitsSeen[64];
+
+extern U64 BishopMagicNumbers[64];
+extern U64 RookMagicNumbers[64];
+
 #endif
 
 //The next step to deal with is move generation of sliding pieces (rooks and bishops). Since they can be blocked, I need to take that in account when generating

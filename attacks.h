@@ -19,4 +19,10 @@ U64 bishop_attacks_mask(int square, U64 blockersBitboard);
 
 U64 rook_attacks_mask(int square, U64 blockersBitboard);
 
+void init_sliders_attacks(int bishop);
+
+U64 get_bishop_attacks(int square, U64 blockersBitboard);
+
+U64 get_rook_attacks(int square, U64 blockersBitboard);
+
 #endif
