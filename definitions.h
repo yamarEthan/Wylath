@@ -25,7 +25,7 @@ typedef enum {
 
 typedef enum {P, N, B, R, Q, K, p, n, b, r, q, k} Piece; //pieces; uppercase for white pieces, lowercase for black pieces
 
-typedef enum {white, black} Side; //side to move
+typedef enum {white, black, both} Side; //side to move; also used to reference the occupancy bitboards
 
 typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 
@@ -40,22 +40,6 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 #define NOT_H_FILE 9187201950435737471ULL //file H is all 0s, rest are 1s; used for pawn attacks mask
 #define NOT_AB_FILE 18229723555195321596ULL //used for knight
 #define NOT_GH_FILE 4557430888798830399ULL //attacks mask
-
-extern U64 bishopBlockersMask[64];
-extern U64 rookBlockersMask[64];
-
-extern U64 bishopAttacksTable[64][512];
-extern U64 rookAttacksTable[64][4096];
-
-extern U64 pawnAttacksTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
-extern U64 knightAttacksTable[64];
-extern U64 kingAttacksTable[64];
-
-extern int bishopBitsSeen[64];
-extern int rookBitsSeen[64];
-
-extern U64 BishopMagicNumbers[64];
-extern U64 RookMagicNumbers[64];
 
 #endif
 

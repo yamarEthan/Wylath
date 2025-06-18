@@ -179,6 +179,51 @@ U64 rook_attacks_mask(int square, U64 blockerBitboard) { //have to fix this
     return attackBitboard;
 }
 
+U64 get_bishop_attacks(int square, U64 blockersBitboard) {
+    blockersBitboard &= bishopBlockersMask[square];
+    blockersBitboard *= BishopMagicNumbers[square];
+    blockersBitboard >>= (64 - bishopBitsSeen[square]);
+
+    return bishopAttacksTable[square][blockersBitboard];
+}
+
+U64 get_rook_attacks(int square, U64 blockersBitboard) {
+    blockersBitboard &= rookBlockersMask[square];
+    blockersBitboard *= RookMagicNumbers[square];
+    blockersBitboard >>= (64 - rookBitsSeen[square]);
+
+    return bishopAttacksTable[square][blockersBitboard];
+}
+
+U64 get_queen_attacks(int square, U64 blockersBitboard) { //only function need for queen attacks lol
+    U64 queenAttacks = 0ULL;
+    U64 bishopBlockersBitboard = blockersBitboard;
+    U64 rookBlockersBitboard = blockersBitboard;
+
+    bishopBlockersBitboard &= bishopBlockersMask[square];
+    bishopBlockersBitboard *= BishopMagicNumbers[square];
+    bishopBlockersBitboard >>= (64 - bishopBitsSeen[square]);
+
+    queenAttacks = bishopBlockersBitboard;
+
+    rookBlockersBitboard &= rookBlockersMask[square];
+    rookBlockersBitboard *= RookMagicNumbers[square];
+    rookBlockersBitboard >>= (64 - rookBitsSeen[square]);
+
+    queenAttacks |= rookBlockersBitboard;
+
+    return queenAttacks;
+}
+
+void init_leapers_attacks() {
+    for(int square = 0; square < 64; square++) {
+        pawnAttacksTable[0][square] = pawn_attacks_mask(square, white);
+        pawnAttacksTable[1][square] = pawn_attacks_mask(square, black);
+        knightAttacksTable[square] = knight_attacks_mask(square);
+        kingAttacksTable[square] = king_attacks_mask(square);
+    }
+}
+
 void init_sliders_attacks(int bishop) { //let's say we initialize the bishop attacks
     for(int square = 0; square < 64; square++) { //for every square,
         bishopBlockersMask[square] = bishop_blockers_mask(square); //set the blocker mask of that square; the bitboard where every square the bishop sees is a 1 except
@@ -201,7 +246,6 @@ void init_sliders_attacks(int bishop) { //let's say we initialize the bishop att
         } //repeat this for all permutations and all squares
     } //the magic numbers is essentially a hashing function to make sure no collision occurs in each square's array
 }
-
 
 /*
     A1, B1, C1, D1, E1, F1, G1, H1,     00, 01, 02, 03, 04, 05, 06, 07,
