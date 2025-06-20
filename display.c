@@ -139,7 +139,7 @@ void print_bitboard(U64 bitboard) {
     printf("----------------------\n");
 }
 
-void print_board() {
+void print_board() { //udpate later to also print game state variables
     printf("----------------------\n");
     for(int rank = 7; rank >= 0; rank--) {
         for(int file = 0; file < 8; file++) {

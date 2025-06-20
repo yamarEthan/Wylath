@@ -2,17 +2,17 @@
 #include "definitions.h"
 #include "attacks.h"
 
-U64 pawnAttacksTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
-U64 knightAttacksTable[64];
-U64 kingAttacksTable[64];
+U64 pawnAttackTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
+U64 knightAttackTable[64];
+U64 kingAttackTable[64];
 
-U64 bishopBlockersMask[64];
-U64 rookBlockersMask[64];
+U64 bishopBlockerMask[64];
+U64 rookBlockerMask[64];
 
-U64 bishopAttacksTable[64][512];
-U64 rookAttacksTable[64][4096];
+U64 bishopAttackTable[64][512];
+U64 rookAttackTable[64][4096];
 
-U64 pawn_attacks_mask(int square, int side) { //have yet to initialize pawnAttacksTable using this function for all squares and sides
+U64 pawn_attack_mask(int square, int side) { //have yet to initialize pawnAttacksTable using this function for all squares and sides
     U64 bitboard = 0ULL; //empty bitboard
     U64 attackBitboard = 0ULL;
     set_bit(bitboard, square);
@@ -29,7 +29,7 @@ U64 pawn_attacks_mask(int square, int side) { //have yet to initialize pawnAttac
     return attackBitboard; //returns only where the pawn can attack
 }
 
-U64 knight_attacks_mask(int square) {
+U64 knight_attack_mask(int square) {
     U64 bitboard = 0ULL;
     U64 attackBitboard = 0ULL;
     set_bit(bitboard, square);
@@ -49,7 +49,7 @@ U64 knight_attacks_mask(int square) {
     return attackBitboard;
 }
 
-U64 king_attacks_mask(int square) {
+U64 king_attack_mask(int square) {
     U64 bitboard = 0ULL;
     U64 attackBitboard = 0ULL;
     set_bit(bitboard, square);
@@ -65,7 +65,7 @@ U64 king_attacks_mask(int square) {
 
     return attackBitboard;
 }
-U64 bishop_blockers_mask(int square) { //generates all squares a bishop sees minus the border squares
+U64 bishop_blocker_mask(int square) { //generates all squares a bishop sees minus the border squares
     U64 blockerMask = 0ULL;
 
     int rank, file;
@@ -80,7 +80,7 @@ U64 bishop_blockers_mask(int square) { //generates all squares a bishop sees min
     return blockerMask;
 }
 
-U64 rook_blockers_mask(int square) { //same as above but for rooks
+U64 rook_blocker_mask(int square) { //same as above but for rooks
     U64 blockerMask = 0ULL;
     int rank, file;
     int targetRank = square / 8;
@@ -94,14 +94,14 @@ U64 rook_blockers_mask(int square) { //same as above but for rooks
     return blockerMask;
 }
 
-U64 get_blockers_bitboard(int index, int bitsInMask, U64 blockerMask) {
-    /*returns one of the possible blockerBitboard combinations given its index, number of bits, and the blockersMask
+U64 get_blocker_bitboard(int index, int bitsInMask, U64 blockerMask) {
+    /*returns one of the possible blockerBitboard combinations given its index, number of bits, and the blockerMask
         For example, let's look at a rook on A1. It sees 12 squares for a total of 4096 possible blockerBoards. At index 0, there is no pieces blocking
         its view. At index 4095, there's a piece at every single square it looks at
 
         bitsInMask can be found using count bits
 
-        blockersMask is the blockers mask for a given square and piece type
+        blockerMask is the blockers mask for a given square and piece type
     */
     U64 blockerBitboard = 0ULL;
 
@@ -109,7 +109,7 @@ U64 get_blockers_bitboard(int index, int bitsInMask, U64 blockerMask) {
         int square = get_lsb_index(blockerMask);
         pop_bit(blockerMask, square);
         
-        if(index & (1 << i)) { //if bit i is a 1 in index, we set bit (square) as a 1 in the blockersBitboard
+        if(index & (1 << i)) { //if bit i is a 1 in index, we set bit (square) as a 1 in the blockerBitboard
             blockerBitboard |= (1ULL << square);
         }
     }
@@ -117,7 +117,7 @@ U64 get_blockers_bitboard(int index, int bitsInMask, U64 blockerMask) {
     return blockerBitboard;
 }
 
-U64 bishop_attacks_mask(int square, U64 blockerBitboard) { //given a bitboard of blockers, generate the possible moves
+U64 bishop_attack_mask(int square, U64 blockerBitboard) { //given a bitboard of blockers, generate the possible moves
     U64 attackBitboard = 0ULL;
     int rank, file;
     int targetRank = square / 8;
@@ -125,7 +125,7 @@ U64 bishop_attacks_mask(int square, U64 blockerBitboard) { //given a bitboard of
 
     for(rank = targetRank + 1, file = targetFile + 1; rank < 8 && file < 8; rank++, file++) { //given a square, set every positive 9th bit; SE direction
         attackBitboard |= (1ULL << ((rank * 8) + file));
-        if((1ULL << ((rank * 8) + file)) & blockerBitboard) break; //if that square is occupied in blockersBitboard, return non-zero and break
+        if((1ULL << ((rank * 8) + file)) & blockerBitboard) break; //if that square is occupied in blockerBitboard, return non-zero and break
     }
 
     for(rank = targetRank + 1, file = targetFile - 1; rank < 8 && file >= 0; rank++, file--) { //SW direction
@@ -146,7 +146,7 @@ U64 bishop_attacks_mask(int square, U64 blockerBitboard) { //given a bitboard of
     return attackBitboard;
 }
 
-U64 rook_attacks_mask(int square, U64 blockerBitboard) { //have to fix this
+U64 rook_attack_mask(int square, U64 blockerBitboard) {
     U64 attackBitboard = 0ULL;
 
     //imagine a rook on A1
@@ -179,91 +179,73 @@ U64 rook_attacks_mask(int square, U64 blockerBitboard) { //have to fix this
     return attackBitboard;
 }
 
-U64 get_bishop_attacks(int square, U64 blockersBitboard) {
-    blockersBitboard &= bishopBlockersMask[square];
-    blockersBitboard *= BishopMagicNumbers[square];
-    blockersBitboard >>= (64 - bishopBitsSeen[square]);
+U64 get_bishop_attacks(int square, U64 blockerBitboard) {
+    blockerBitboard &= bishopBlockerMask[square];
+    blockerBitboard *= BishopMagicNumbers[square];
+    blockerBitboard >>= (64 - bishopBitsSeen[square]);
 
-    return bishopAttacksTable[square][blockersBitboard];
+    return bishopAttackTable[square][blockerBitboard];
 }
 
-U64 get_rook_attacks(int square, U64 blockersBitboard) {
-    blockersBitboard &= rookBlockersMask[square];
-    blockersBitboard *= RookMagicNumbers[square];
-    blockersBitboard >>= (64 - rookBitsSeen[square]);
+U64 get_rook_attacks(int square, U64 blockerBitboard) {
+    blockerBitboard &= rookBlockerMask[square];
+    blockerBitboard *= RookMagicNumbers[square];
+    blockerBitboard >>= (64 - rookBitsSeen[square]);
 
-    return bishopAttacksTable[square][blockersBitboard];
+    return rookAttackTable[square][blockerBitboard];
 }
 
-U64 get_queen_attacks(int square, U64 blockersBitboard) { //only function need for queen attacks lol
+U64 get_queen_attacks(int square, U64 blockerBitboard) { //only function need for queen attacks lol
     U64 queenAttacks = 0ULL;
-    U64 bishopBlockersBitboard = blockersBitboard;
-    U64 rookBlockersBitboard = blockersBitboard;
+    U64 bishopBlockerBitboard = blockerBitboard;
+    U64 rookBlockerBitboard = blockerBitboard;
 
-    bishopBlockersBitboard &= bishopBlockersMask[square];
-    bishopBlockersBitboard *= BishopMagicNumbers[square];
-    bishopBlockersBitboard >>= (64 - bishopBitsSeen[square]);
+    bishopBlockerBitboard &= bishopBlockerMask[square];
+    bishopBlockerBitboard *= BishopMagicNumbers[square];
+    bishopBlockerBitboard >>= (64 - bishopBitsSeen[square]);
 
-    queenAttacks = bishopBlockersBitboard;
+    queenAttacks = bishopBlockerBitboard;
 
-    rookBlockersBitboard &= rookBlockersMask[square];
-    rookBlockersBitboard *= RookMagicNumbers[square];
-    rookBlockersBitboard >>= (64 - rookBitsSeen[square]);
+    rookBlockerBitboard &= rookBlockerMask[square];
+    rookBlockerBitboard *= RookMagicNumbers[square];
+    rookBlockerBitboard >>= (64 - rookBitsSeen[square]);
 
-    queenAttacks |= rookBlockersBitboard;
+    queenAttacks |= rookBlockerBitboard;
 
     return queenAttacks;
 }
 
 void init_leapers_attacks() {
     for(int square = 0; square < 64; square++) {
-        pawnAttacksTable[0][square] = pawn_attacks_mask(square, white);
-        pawnAttacksTable[1][square] = pawn_attacks_mask(square, black);
-        knightAttacksTable[square] = knight_attacks_mask(square);
-        kingAttacksTable[square] = king_attacks_mask(square);
+        pawnAttackTable[0][square] = pawn_attack_mask(square, white);
+        pawnAttackTable[1][square] = pawn_attack_mask(square, black);
+        knightAttackTable[square] = knight_attack_mask(square);
+        kingAttackTable[square] = king_attack_mask(square);
     }
 }
 
 void init_sliders_attacks(int bishop) { //let's say we initialize the bishop attacks
     for(int square = 0; square < 64; square++) { //for every square,
-        bishopBlockersMask[square] = bishop_blockers_mask(square); //set the blocker mask of that square; the bitboard where every square the bishop sees is a 1 except
-        rookBlockersMask[square] = rook_blockers_mask(square); //if it's an edge square
-        
-        U64 blockersMask = bishop ? bishopBlockersMask[square] : rookBlockersMask[square]; //get that blocker mask
-        int bitsSeen = count_bits(blockersMask); //get how many 1s are in that mask
-        int blockersIndices = 1 << bitsSeen; //gets you 2^bitsSeen, aka the total possible permutation of blockers bitboards
 
-        for(int i = 0; i < blockersIndices; i++) { //for every possible permutation of blockers bitboards
+        if(bishop) {bishopBlockerMask[square] = bishop_blocker_mask(square);
+        } else {rookBlockerMask[square] = rook_blocker_mask(square);}
+
+        U64 blockerMask = bishop ? bishopBlockerMask[square] : rookBlockerMask[square]; //get that blocker mask
+        int bitsInMask = count_bits(blockerMask); //get how many 1s are in that mask
+        int blockerIndices = 1 << bitsInMask; //gets you 2^bitsSeen, aka the total possible permutation of blockers bitboards
+
+        for(int i = 0; i < blockerIndices; i++) { //for every possible permutation of blockers bitboards
+            U64 blockerBitboard = get_blocker_bitboard(i, bitsInMask, blockerMask); //get one specific blockers bitboard
             if(bishop) {
-                U64 blockersBitboard = get_blockers_bitboard(i, bitsSeen, blockersMask); //get one specific blockers bitboard
-                int magicIndex = (blockersIndices * BishopMagicNumbers[square]) >> (64 - bishopBitsSeen[square]); //get the magicIndex using magic numbers we found
-                bishopAttacksTable[square][magicIndex] = bishop_attacks_mask(square, blockersBitboard); //store the corresponding attack bitboard in the array
+                int magicIndex = (blockerBitboard * BishopMagicNumbers[square]) >> (64 - bishopBitsSeen[square]); //get the magicIndex using magic numbers we found
+                bishopAttackTable[square][magicIndex] = bishop_attack_mask(square, blockerBitboard); //store the corresponding attack bitboard in the array
             } else {
-                U64 blockersBitboard = get_blockers_bitboard(i, bitsSeen, blockersMask);
-                int magicIndex = (blockersIndices * RookMagicNumbers[square]) >> (64 - rookBitsSeen[square]);
-                rookAttacksTable[square][magicIndex] = rook_attacks_mask(square, blockersBitboard);
+                int magicIndex = (blockerBitboard * RookMagicNumbers[square]) >> (64 - rookBitsSeen[square]);
+                rookAttackTable[square][magicIndex] = rook_attack_mask(square, blockerBitboard);
             }
         } //repeat this for all permutations and all squares
     } //the magic numbers is essentially a hashing function to make sure no collision occurs in each square's array
 }
-
-/*
-    A1, B1, C1, D1, E1, F1, G1, H1,     00, 01, 02, 03, 04, 05, 06, 07,
-    A2, B2, C2, D2, E2, F2, G2, H2,     08, 09, 10, 11, 12, 13, 14, 15,
-    A3, B3, C3, D3, E3, F3, G3, H3,     16, 17, 18, 19, 20, 21, 22, 23,
-    A4, B4, C4, D4, E4, F4, G4, H4,     24, 25, 26, 27, 28, 29, 30, 31,
-    A5, B5, C5, D5, E5, F5, G5, H5,     32, 33, 34, 35, 36, 37, 38, 39,
-    A6, B6, C6, D6, E6, F6, G6, H6,     40, 41, 42, 43, 44, 45, 46, 47,
-    A7, B7, C7, D7, E7, F7, G7, H7,     48, 49, 50, 51, 52, 53, 54, 55,
-    A8, B8, C8, D8, E8, F8, G8, H8,     56, 57, 58, 59, 60, 61, 62, 63,
-    NO_SQUARE                           64
-
-    H8, G8, F8, E8, D8, C8, B8, A8, ..., H3, G3, F3, E3, D3, C3, B3, A3, H2, G2, F2, E2, D2, C2, B2, A2, H1, G1, F1, E1, D1, C1, B1, A1     SQUARE
-    63, 62, 61, 60, 59, 58, 57, 57, ..., 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 09, 08, 07, 06, 05, 04, 03, 02, 01, 00     BIT
-    
-    the << operator shifts bits to the left heading to MSB
-    the >> shifts bit to the right heading to LSB
-*/
 
 int bishopBitsSeen[64] = { //given a bishop on a square, this tells you how many squares it looks at
     6, 5, 5, 5, 5, 5, 5, 6, 
@@ -288,135 +270,135 @@ int rookBitsSeen[64] = { //for rooks
 };
 
 U64 BishopMagicNumbers[64] = {
-    0x20204004822000bULL, //square 1 (a1)
-    0x40b00002009038ULL, //square 2 (a2)
-    0x105840004100200ULL, //and so on
-    0x8204260401200024ULL,
-    0x2202001500200100ULL,
-    0x1000081218200010ULL,
-    0x8082240200a0000ULL,
-    0x808004013100ULL,
-    0x4300a1030048210ULL,
-    0x11001800201bULL,
-    0x6020816400820000ULL,
-    0x8504100400970040ULL,
-    0x8040811040402001ULL,
-    0x9080430011000a0ULL,
-    0xc1200120810ULL,
-    0x20900224044409ULL,
-    0x242000828850012ULL,
-    0x6105000019240310ULL,
-    0x400020300110040cULL,
-    0x8082104000400ULL,
-    0x480282002044ULL,
-    0x40840100108ULL,
-    0x40480024a0104ULL,
-    0x9401040020080280ULL,
-    0x11080208824a00ULL,
-    0x403044010100020ULL,
-    0x4002402002024410ULL,
-    0x4040700102a00ULL,
-    0x2000830301040ULL,
-    0x921420060401028ULL,
-    0x402484022a00ULL,
-    0x581a90020c054ULL,
-    0x2104110080100ULL,
-    0x202106000a18882ULL,
-    0x8040100100030ULL,
-    0xa040400480020ULL,
-    0x504040040010ULL,
-    0x2060090102202ULL,
-    0x2088211141210ULL,
-    0x1a0110d0010a1ULL,
-    0x2808101b1800200cULL,
-    0x440a40d04800ULL,
-    0x2002040024080800ULL,
-    0x4014890210200ULL,
-    0x8c02501000010ULL,
-    0x80840c0152804ULL,
-    0x4a100091000061ULL,
-    0x588281000c480020ULL,
-    0x841a09008100008ULL,
-    0x422800264023ULL,
-    0x4018100202064080ULL,
-    0x4050200010440000ULL,
-    0x200848849003824ULL,
-    0x1000004610e20050ULL,
-    0x1084038428104ULL,
-    0xa04201006cc08ULL,
-    0x100000c004104020ULL,
-    0x161040084800ULL,
-    0x104404002898226ULL,
-    0x5002001000030408ULL,
-    0x4411003008080440ULL,
-    0x84010240d048030ULL,
-    0x1000084500142280ULL,
-    0x840440020824ULL,
+    0x420c80100408202ULL,
+    0x1204311202260108ULL,
+    0x2008208102030000ULL,
+    0x24081001000caULL,
+    0x488484041002110ULL,
+    0x1a080c2c010018ULL,
+    0x20a02a2400084ULL,
+    0x440404400a01000ULL,
+    0x8931041080080ULL,
+    0x200484108221ULL,
+    0x80460802188000ULL,
+    0x4000090401080092ULL,
+    0x4000011040a00004ULL,
+    0x20011048040504ULL,
+    0x2008008401084000ULL,
+    0x102422a101a02ULL,
+    0x2040801082420404ULL,
+    0x8104900210440100ULL,
+    0x202101012820109ULL,
+    0x248090401409004ULL,
+    0x44820404a00020ULL,
+    0x40808110100100ULL,
+    0x480a80100882000ULL,
+    0x184820208a011010ULL,
+    0x110400206085200ULL,
+    0x1050010104201ULL,
+    0x4008480070008010ULL,
+    0x8440040018410120ULL,
+    0x41010000104000ULL,
+    0x4010004080241000ULL,
+    0x1244082061040ULL,
+    0x51060000288441ULL,
+    0x2215410a05820ULL,
+    0x6000941020a0c220ULL,
+    0xf2080100020201ULL,
+    0x8010020081180080ULL,
+    0x940012060060080ULL,
+    0x620008284290800ULL,
+    0x8468100140900ULL,
+    0x418400aa01802100ULL,
+    0x4000882440015002ULL,
+    0x420220a11081ULL,
+    0x401a26030000804ULL,
+    0x2184208000084ULL,
+    0xa430820a0410c201ULL,
+    0x640053805080180ULL,
+    0x4a04010a44100601ULL,
+    0x10014901001021ULL,
+    0x422411031300100ULL,
+    0x824222110280000ULL,
+    0x8800020a0b340300ULL,
+    0xa8000441109088ULL,
+    0x404000861010208ULL,
+    0x40112002042200ULL,
+    0x2141006480b00a0ULL,
+    0x2210108081004411ULL,
+    0x2010804070100803ULL,
+    0x7a0011010090ac31ULL,
+    0x18005100880400ULL,
+    0x8010001081084805ULL,
+    0x400200021202020aULL,
+    0x4100342100a0221ULL,
+    0x404408801010204ULL,
+    0x6360041408104012ULL,
 };
 
 U64 RookMagicNumbers[64] = {
-    0xa820000100120040ULL,
-    0x1602088020004068ULL,
-    0xe00000000400400ULL,
-    0xca00000820100040ULL,
-    0x1200030100020c01ULL,
-    0x8828004240c08000ULL,
-    0x40260a0000c0000ULL,
-    0xa00000018040000ULL,
-    0x84010000000018ULL,
-    0x206006002200000ULL,
-    0x2041000808400108ULL,
-    0x4020881000040402ULL,
-    0x8612002001010000ULL,
-    0x608200004100200ULL,
-    0x1424000003020800ULL,
-    0x104000002000000ULL,
-    0xa28280400000011ULL,
-    0x4004040000030002ULL,
-    0x8082120080004410ULL,
-    0x1120200464001c0ULL,
-    0xb2020014500dULL,
-    0x2100920207800000ULL,
-    0xc2800005c0830ULL,
-    0x3c3040008010000ULL,
-    0x408802808a80002ULL,
-    0x2040200200800240ULL,
-    0x1200501240000ULL,
-    0x20204200120800ULL,
-    0x108010100081200ULL,
-    0xc864010300100004ULL,
-    0x4481205000000902ULL,
-    0x250621004400100ULL,
-    0x21108801000c480ULL,
-    0x110402082080001ULL,
-    0x41204a0082000002ULL,
-    0x2001001005002200ULL,
-    0xc000201202000b80ULL,
-    0x82001040a8000000ULL,
-    0x2100250218008000ULL,
-    0x84001a4020010101ULL,
-    0xc29a0c080080060ULL,
-    0x54890c0100032ULL,
-    0x110202200820020ULL,
-    0x2042005008020000ULL,
-    0x100804021100000ULL,
-    0x4008102010180ULL,
-    0x1048850022084000ULL,
-    0x2461802892400000ULL,
-    0x10c10920805000ULL,
-    0x204011040a0212ULL,
-    0xa0103884022000ULL,
-    0x3040806100100ULL,
-    0x4004010820822006ULL,
-    0x5202044084190401ULL,
-    0x1002215804001ULL,
-    0x204210040861000ULL,
-    0x688801041042001ULL,
-    0x448401061060000ULL,
-    0x20911208041242ULL,
-    0x8011040810821020ULL,
-    0x1322049814010c40ULL,
-    0x2400a10202440400ULL,
-    0x2001002a00448000ULL,
-    0x2811421004008ULL,
+    0x8080008118604002ULL,
+    0x4040100040002002ULL,
+    0x80100018e00380ULL,
+    0x100041002200900ULL,
+    0x200020008100420ULL,
+    0x4100040002880100ULL,
+    0x80008002000100ULL,
+    0x8100014028820300ULL,
+    0x860802080004008ULL,
+    0x112004081020024ULL,
+    0x1042002010408200ULL,
+    0x410010000b0020ULL,
+    0x20800800800400ULL,
+    0x4808026000400ULL,
+    0x820800100800200ULL,
+    0xd43000a00a04900ULL,
+    0x4080818000400068ULL,
+    0x20818040002005ULL,
+    0xa0010018410020ULL,
+    0x8010004008040041ULL,
+    0x28008008800400ULL,
+    0x809010002080400ULL,
+    0x1040240048311230ULL,
+    0x88020000d28425ULL,
+    0x1480004440002010ULL,
+    0x2020400440201000ULL,
+    0x2000200080100080ULL,
+    0x1400280280300080ULL,
+    0x4028002500181100ULL,
+    0x8040040080800200ULL,
+    0x800020400108108ULL,
+    0x3041120004408cULL,
+    0x80804008800020ULL,
+    0x4010002000400040ULL,
+    0x2000100080802000ULL,
+    0x8300810804801000ULL,
+    0x8011001205000800ULL,
+    0x810800601800400ULL,
+    0x4301083214000150ULL,
+    0x204026458e001401ULL,
+    0x40204000808000ULL,
+    0x8001008040010020ULL,
+    0x8410820820420010ULL,
+    0x1003001000090020ULL,
+    0x804040008008080ULL,
+    0x12000810020004ULL,
+    0x1000100200040208ULL,
+    0x430000a044020001ULL,
+    0x280009023410300ULL,
+    0xe0100040002240ULL,
+    0x200100401700ULL,
+    0x2244100408008080ULL,
+    0x8000400801980ULL,
+    0x2000810040200ULL,
+    0x8010100228810400ULL,
+    0x2000009044210200ULL,
+    0x4080008040102101ULL,
+    0x40002080411d01ULL,
+    0x2005524060000901ULL,
+    0x502001008400422ULL,
+    0x489a000810200402ULL,
+    0x1004400080a13ULL,
+    0x4000011008020084ULL,
+    0x26002114058042ULL,
 };
