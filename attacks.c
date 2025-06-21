@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "definitions.h"
 #include "attacks.h"
+#include "display.h"
 
 U64 pawnAttackTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
 U64 knightAttackTable[64];
@@ -245,6 +246,28 @@ void init_sliders_attacks(int bishop) { //let's say we initialize the bishop att
             }
         } //repeat this for all permutations and all squares
     } //the magic numbers is essentially a hashing function to make sure no collision occurs in each square's array
+}
+
+static inline int is_square_attacked(int square, int side) { //checks if the square is attacked by the given side
+    //we start with pawns
+    //say we're checking if the square is attacked by white pawns. how do we do that?
+    //so if side attacking is white, we check if the pawnAttackTable of a black pawn in that square is matched with a white pawn there
+    //for example, a black pawn on e5 is attacking d4 and f4, SO if a white pawn is on either of those squares, the e5 square is being attacked by white
+
+    if((side == white) && (pawnAttackTable[black][square] & pieceBitboards[P])) {return 1;}
+    if((side == black) && (pawnAttackTable[white][square] & pieceBitboards[p])) {return 1;}
+
+    //now we do knights; now we only need the square for the attack 
+    if(knightAttackTable[square] & ((side == white) ? pieceBitboards[N] : pieceBitboards[n])) {return 1;}
+    if(kingAttackTable[square] & ((side == white) ? pieceBitboards[K] : pieceBitboards[k])) {return 1;}
+
+    //now we do sliding pieces; to get the bishop/rook attacks, we need a blocker bitboard, but we didn't ask for it above.
+    //so instead, we feed it the occupancies bitboard of both black and white just so that we account for every piece that may be in the way
+    if(get_bishop_attacks(square, occupancyBitboards[both]) & ((side == white) ? pieceBitboards[B] : pieceBitboards[b])) {return 1;}
+    if(get_rook_attacks(square, occupancyBitboards[both]) & ((side == white) ? pieceBitboards[R] : pieceBitboards[r])) {return 1;}
+    //we don't need to get queen attacks as checking both bishop and rooks does the same thing
+
+    return 0; //return 0 if the square is not attacked by the given side
 }
 
 int bishopBitsSeen[64] = { //given a bishop on a square, this tells you how many squares it looks at

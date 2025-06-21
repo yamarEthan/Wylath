@@ -43,5 +43,5 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 
 #endif
 
-//The next step to deal with is move generation of sliding pieces (rooks and bishops). Since they can be blocked, I need to take that in account when generating
-//their attack tables. I must use this method called Magic Bitboards to generate their legal moves
+//now that the attack tables are all set, we must now deal with move generations and such. The first thing to do is check if a square is attacked and by who.
+//I think according to the chess wiki we make a function that returns true or false whether a square is attacked and which side is attacking

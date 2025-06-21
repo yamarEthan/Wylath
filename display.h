@@ -34,6 +34,7 @@ extern int ply; //half move; white/black plays a move but not the other side; re
 
 extern int charToPiece[]; //useful for parsing a FEN string
 extern char pieceToChar[12];
+extern char *unicode_pieces[12];
 
 void parse_fen(char *fen);
 void print_bitboard(U64 bitboard); //print a given bitboard in chessboard manner

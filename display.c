@@ -31,6 +31,10 @@ int charToPiece[] = { //useful for parsing a FEN string
 };
 
 char pieceToChar[12] = "PNBRQKpnbrqk"; //useful for printing the board
+char *unicode_pieces[12] = { //may have issues if the computer it's running on doesn't support these, so switch to the chars above if that happens in print_board()
+    "\u265F", "\u265E", "\u265D", "\u265C", "\u265B", "\u265A",  // the black pieces unicode gives looks like white pieces, so i switched their representation
+    "\u2659", "\u2658", "\u2657", "\u2656", "\u2655", "\u2654"   // vice versa
+};
 
 /*FEN has 6 fields:
     1. Piece Placement; lowercase for black, uppercase for white
@@ -139,7 +143,7 @@ void print_bitboard(U64 bitboard) {
     printf("----------------------\n");
 }
 
-void print_board() { //udpate later to also print game state variables
+void print_board() { //update later to also print game state variables
     printf("----------------------\n");
     for(int rank = 7; rank >= 0; rank--) {
         for(int file = 0; file < 8; file++) {
@@ -150,12 +154,13 @@ void print_board() { //udpate later to also print game state variables
             for(int i = P; i <= k; i++) {
                 if(get_bit(pieceBitboards[i], square)) {
                     piece = i;
-                    printf(" %c", pieceToChar[piece]);
-                    break;
+                    printf(" %s", unicode_pieces[piece]);
+                    //printf(" %c", pieceToChar[piece]); //switch to this if unicode pieces do not print right
+                    break;                    
                 }
             }
             if(piece == -1) {printf(" -");}
-        }
+            }
         printf("\n");
     }
     printf("\n     a b c d e f g h\n----------------------\n");
