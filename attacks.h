@@ -1,8 +1,6 @@
 #ifndef ATTACKS_H
 #define ATTACKS_H
 
-#include "definitions.h"
-
 extern U64 pawnAttackTable[2][64]; //contains the attack table for pawns in both sides and for each square [side][square]
 extern U64 knightAttackTable[64];
 extern U64 kingAttackTable[64];
@@ -36,6 +34,6 @@ U64 get_bishop_attacks(int square, U64 blockerBitboard); //this function just gr
 U64 get_rook_attacks(int square, U64 blockerBitboard); //generating it like i nthe attack_mask functions
 U64 get_queen_attacks(int square, U64 blockerBitboard); //just a union of bishop and rook attacks
 
-static inline int is_square_attacked(int square, int side);
+int is_square_attacked(int square, int side);
 
 #endif

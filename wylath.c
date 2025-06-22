@@ -2,6 +2,7 @@
 #include "definitions.h"
 #include "display.h"
 #include "attacks.h"
+#include "moves.h"
 
 //naming schemes:
 //variables: camelCase

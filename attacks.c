@@ -13,12 +13,12 @@ U64 rookBlockerMask[64];
 U64 bishopAttackTable[64][512];
 U64 rookAttackTable[64][4096];
 
-U64 pawn_attack_mask(int square, int side) { //have yet to initialize pawnAttacksTable using this function for all squares and sides
+U64 pawn_attack_mask(int square, int side) { //have yet to deal with initial two square move of pawns and en passant
     U64 bitboard = 0ULL; //empty bitboard
     U64 attackBitboard = 0ULL;
     set_bit(bitboard, square);
 
-    if(!side) { //if white
+    if(!side) { //if white (because white is 0)
         attackBitboard |= (bitboard << 7) & (NOT_H_FILE); //if the shifted bit doesn't end on the H file, accept it; if it is on H file, that means the attack square
         attackBitboard |= (bitboard << 9) & (NOT_A_FILE); //moved up two ranks, which is wrong
 
@@ -248,7 +248,7 @@ void init_sliders_attacks(int bishop) { //let's say we initialize the bishop att
     } //the magic numbers is essentially a hashing function to make sure no collision occurs in each square's array
 }
 
-static inline int is_square_attacked(int square, int side) { //checks if the square is attacked by the given side
+int is_square_attacked(int square, int side) { //checks if the square is attacked by the given side
     //we start with pawns
     //say we're checking if the square is attacked by white pawns. how do we do that?
     //so if side attacking is white, we check if the pawnAttackTable of a black pawn in that square is matched with a white pawn there
