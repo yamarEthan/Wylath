@@ -30,7 +30,19 @@ int charToPiece[] = { //useful for parsing a FEN string
     ['k'] = k
 };
 
+char *squareToCoords[] = {
+    "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
+    "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
+    "A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3",
+    "A4", "B4", "C4", "D4", "E4", "F4", "G4", "H4",
+    "A5", "B5", "C5", "D5", "E5", "F5", "G5", "H5",
+    "A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6",
+    "A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7",
+    "A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8",
+};
+
 char pieceToChar[12] = "PNBRQKpnbrqk"; //useful for printing the board
+
 char *unicode_pieces[12] = { //may have issues if the computer it's running on doesn't support these, so switch to the chars above if that happens in print_board()
     "\u265F", "\u265E", "\u265D", "\u265C", "\u265B", "\u265A",  // the black pieces unicode gives looks like white pieces, so i switched their representation
     "\u2659", "\u2658", "\u2657", "\u2656", "\u2655", "\u2654"   // vice versa
@@ -154,8 +166,8 @@ void print_board() { //update later to also print game state variables
             for(int i = P; i <= k; i++) {
                 if(get_bit(pieceBitboards[i], square)) {
                     piece = i;
-                    printf(" %s", unicode_pieces[piece]);
-                    //printf(" %c", pieceToChar[piece]); //switch to this if unicode pieces do not print right
+                    //printf(" %s", unicode_pieces[piece]);
+                    printf(" %c", pieceToChar[piece]); //switch to this if unicode pieces do not print right
                     break;                    
                 }
             }

@@ -32,6 +32,7 @@ extern int fullMoves; //number of full plys played in total in the game
 
 extern int ply; //half move; white/black plays a move but not the other side; resets after a pawn push or piece capture; used for 50-move draw rule
 
+extern char *squareToCoords[];
 extern int charToPiece[]; //useful for parsing a FEN string
 extern char pieceToChar[12];
 extern char *unicode_pieces[12];

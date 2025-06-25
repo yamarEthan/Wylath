@@ -18,7 +18,7 @@ U64 pawn_attack_mask(int square, int side) { //have yet to deal with initial two
     U64 attackBitboard = 0ULL;
     set_bit(bitboard, square);
 
-    if(!side) { //if white (because white is 0)
+    if(side == white) { //if white
         attackBitboard |= (bitboard << 7) & (NOT_H_FILE); //if the shifted bit doesn't end on the H file, accept it; if it is on H file, that means the attack square
         attackBitboard |= (bitboard << 9) & (NOT_A_FILE); //moved up two ranks, which is wrong
 

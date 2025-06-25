@@ -20,10 +20,11 @@ int main() {
     init_sliders_attacks(0); //initialize rook attacks
 
     print_board();
+
+    generate_moves(&pseudoMoves);
+
+    print_movelist(&pseudoMoves);
     
-    for(int i = 0; i < 3; i++) {
-        print_bitboard(occupancyBitboards[i]);
-    }
 }
 
 /*

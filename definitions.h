@@ -3,10 +3,13 @@
 
 typedef unsigned long long U64;
 
+typedef __uint16_t Move;
+
 #define NAME "Wylath"
-#define BRD_SQ_NUM 64
 
 #define START_POSITION "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+#define TWO_EN_PASSANT "2r3k1/1q1nbppp/r3p3/3pP3/pPpP4/P1Q2N2/2RN1PPP/2R4K b - b3 0 23" //this position has two black pawns able to capture with enpassant
+    //test this position to make sure enpassant move generation works in the future as this is a famous position revealing a bug in chess engines
 
 typedef enum {
     A1, B1, C1, D1, E1, F1, G1, H1,     //00, 01, 02, 03, 04, 05, 06, 07,
@@ -24,7 +27,7 @@ typedef enum {
 //  63, 62, 61, 60, 59, 58, 57, 57, ..., 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 09, 08, 07, 06, 05, 04, 03, 02, 01, 00     BIT
 
 typedef struct { //in the future, instead of storing the moves as just int, we may encode it as specifically 32-bit numbers for extra information
-    int moves[256]; //the record of most number of legal moves in one position is 218, so 256 is a good enough amount to store all moves for any position
+    Move moves[256]; //the record of most number of legal moves in one position is 218, so 256 is a good enough amount to store all moves for any position
     int count; //keep track of how many moves are in the list
 } MoveList;
 
@@ -46,25 +49,35 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 #define NOT_AB_FILE 18229723555195321596ULL //used for knight
 #define NOT_GH_FILE 4557430888798830399ULL //attacks mask
 
+#define encode_move(source, target, flags) ((Move) (((source) & 0x3F) | (((target) & 0x3F) << 6) | ((flags) << 12)))
+//the first 6 bits is to encode the original square, the next 6 bits the square it's heading to, and the last 4 bits for any flags such as castling/promotion
+#define get_source(move) ((move) & 0x3F)
+#define get_target(move) (((move) >> 6) & 0x3F)
+#define get_flags(move) ((move) >> 12)
+
+//FLAGS WITH 4-BITS (taken from chess programming wiki):
+#define QUIET_FLAG 0
+#define DOUBLE_PUSH_FLAG 1 //double pawn push
+#define KING_CASTLE_FLAG 2
+#define QUEEN_CASTLE_FLAG 3
+#define CAPTURE_FLAG 4
+#define EP_CAPTURE_FLAG 5 //en passant capture
+//skip 6 and 7 to split between promo flags and other flags
+#define KNIGHT_PROMO_FLAG 8
+#define BISHOP_PROMO_FLAG 9
+#define ROOK_PROMO_FLAG 10
+#define QUEEN_PROMO_FLAG 11
+#define NP_CAPTURE_FLAG 12 //knight promotion and capture
+#define BP_CAPTURE_FLAG 13
+#define RP_CAPTURE_FLAG 14
+#define QP_CAPTURE_FLAG 15 
+
+//"0x" is just the prefix to show that it's a hexademical number; 0x3F == 63 (3 * 16^1 + F(15))
+//to convert hexadecmial to binary, just turn every digit into it's 4-bit representation; 0x3F = 0011 1111
+//the purpose of the 0x3F is to make sure the source and target variables will only have their first 6 bits contribute (0-63)
+//so if you happen to give a number higher than 63, the "& 0x3F" will truncate it to a number within 0-63.
+
 #endif
 
-//now that the attack tables are all set, we must now deal with move generations and such. The first thing to do is check if a square is attacked and by who.
-//I think according to the chess wiki we make a function that returns true or false whether a square is attacked and which side is attacking
+//pseudo moves are now all generated. I want to check if the generators are correct, so I want to be able to print the moves and movelist.
 
-//now we must generate moves. attacks are easy and are initialized at the start of the program and then stored to be able to be easily accessed, but move generation
-//is constantly being updated to take account of board state and legal moves. we need to generate what moves are possible given the current board state and side
-//to move.
-
-//more steps to generation: we divide it to two parts: move generation and move making.
-//  move generation only generates what the pieces can do; it makes pseduolegal moves
-// move making confirms the move by making sure it is a legal move; i.e. it does not leave the king in check
-
-//from what I've seen online, all the possible moves are stored in a move list. C doesn't have lists though, so maybe just an array?
-
-//for move generation, the order of the moves in the movelist does not matter at the moment so just stuff them all in there.
-//it's only DURING the searching and evaluating that the order of the moves in the list matters as if the first move is good, the rest is ignored, saving time.
-
-//the standard way to do move list is a struct with an array of size [256] and a count of how many moves are in that array
-
-//after generating the moves, we also need to encode the moves for extra information. Online, it states to stores moves as a 32-bit integer, with every 4
-//or so bits storing information, such as castling rights and enpassant. This is probably just a struct and a quick rewrite to MoveList struct.
