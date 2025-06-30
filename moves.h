@@ -22,7 +22,4 @@ void generate_queen_moves(MoveList *moveList, int side);
 
 void generate_king_moves(MoveList *moveList, int side);
 
-void print_move(Move move);
-
-void print_movelist(MoveList *moveList);
 #endif

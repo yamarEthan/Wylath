@@ -205,13 +205,13 @@ U64 get_queen_attacks(int square, U64 blockerBitboard) { //only function need fo
     bishopBlockerBitboard *= BishopMagicNumbers[square];
     bishopBlockerBitboard >>= (64 - bishopBitsSeen[square]);
 
-    queenAttacks = bishopBlockerBitboard;
+    queenAttacks = bishopAttackTable[square][bishopBlockerBitboard];
 
     rookBlockerBitboard &= rookBlockerMask[square];
     rookBlockerBitboard *= RookMagicNumbers[square];
     rookBlockerBitboard >>= (64 - rookBitsSeen[square]);
 
-    queenAttacks |= rookBlockerBitboard;
+    queenAttacks |= rookAttackTable[square][rookBlockerBitboard];
 
     return queenAttacks;
 }

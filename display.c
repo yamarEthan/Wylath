@@ -67,16 +67,15 @@ void parse_fen(char *fen) { //may have issues with unknown characters or overflo
             if((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
                 int piece = charToPiece[(unsigned char)*fen];
                 set_bit(pieceBitboards[piece], square);
-                fen++;
             }
             if((*fen >= '0' && *fen <= '9')) {
                 int blanks = *fen - '0'; //converts char to int
-                file += blanks;
-                fen++;
+                file += blanks - 1;
             }
-            if (*fen == '/') {
-                fen++;
-            }
+            fen++;
+        }
+        if (*fen == '/') {
+            fen++;
         }
     }
 
@@ -101,7 +100,6 @@ void parse_fen(char *fen) { //may have issues with unknown characters or overflo
         fen++;
         int rank = *fen - '0';
         enPassant = ((rank - 1) * 8) + file; //subtract one due to zero based indexing
-        //printf("\nEn Passant Square: %d\n", enPassant); //keep for now just in case
     } else {
         enPassant = NO_SQUARE;
     }
@@ -155,7 +153,7 @@ void print_bitboard(U64 bitboard) {
     printf("----------------------\n");
 }
 
-void print_board() { //update later to also print game state variables
+void print_board() {
     printf("----------------------\n");
     for(int rank = 7; rank >= 0; rank--) {
         for(int file = 0; file < 8; file++) {
@@ -175,7 +173,23 @@ void print_board() { //update later to also print game state variables
             }
         printf("\n");
     }
-    printf("\n     a b c d e f g h\n----------------------\n");
+    printf("\n     a b c d e f g h\n----------------------\n\n");
+    printf("Side to Move: %s\n", !side ? "White" : "Black");
+    printf("En Passant: %s\n", (enPassant != NO_SQUARE) ? squareToCoords[enPassant] : "None");
+    printf("Castling: %c%c%c%c\n", (castlingRights & wk) ? 'K': '-', (castlingRights & wq) ? 'Q': '-', (castlingRights & bk) ? 'k': '-', (castlingRights & bq) ? 'q': '-');
+}
+
+void print_move(Move move) { //have to update this function later to deal with flags such as promoted piece
+    printf("%s to %s", squareToCoords[get_source(move)], squareToCoords[get_target(move)]);
+}
+
+void print_movelist(MoveList *moveList) {
+    for(int i = 0; i < moveList->count; i++) {
+        int move = moveList->moves[i];
+        print_move(move);
+        printf("\n");
+    }
+    printf("Number of moves in list: %d\n", moveList->count);
 }
 
 /*

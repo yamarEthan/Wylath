@@ -9,7 +9,7 @@ typedef __uint16_t Move;
 
 #define START_POSITION "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 #define TWO_EN_PASSANT "2r3k1/1q1nbppp/r3p3/3pP3/pPpP4/P1Q2N2/2RN1PPP/2R4K b - b3 0 23" //this position has two black pawns able to capture with enpassant
-    //test this position to make sure enpassant move generation works in the future as this is a famous position revealing a bug in chess engines
+#define MAX_MOVES "R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1" //position with 218 legal moves; not the max possible but it's up there
 
 typedef enum {
     A1, B1, C1, D1, E1, F1, G1, H1,     //00, 01, 02, 03, 04, 05, 06, 07,
@@ -78,6 +78,3 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 //so if you happen to give a number higher than 63, the "& 0x3F" will truncate it to a number within 0-63.
 
 #endif
-
-//pseudo moves are now all generated. I want to check if the generators are correct, so I want to be able to print the moves and movelist.
-
