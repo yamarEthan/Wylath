@@ -11,6 +11,91 @@ void add_move(MoveList *moveList, Move move) {
     moveList->count++;
 }
 
+int make_move(Move move) { //make sure to update occupancy bitboard, piece bitboard, squareToPiece table, side, enPassant, castling, moves, and ply
+    int source = get_source(move);
+    int target = get_target(move);
+    int flag = get_flag(move);
+    int piece = squareToPiece[source];
+    int opponent = side ^ 1; //XOR operator
+    int capturedPiece = -1; int promotedPiece = -1;
+    int rookFrom, rookTo, rookColor;
+
+    //save_board(); write later
+
+    pop_bit(pieceBitboards[piece], source); pop_bit(occupancyBitboards[side], source);
+    set_bit(pieceBitboards[piece], target); set_bit(occupancyBitboards[side], target);
+    squareToPiece[source] = -1;
+
+    //if king or rook moves, update castling rights
+    if(piece == K) {castlingRights &= ~(wk | wq);}
+    if(piece == k) {castlingRights &= ~(bk | bq);}
+    if(piece == R) { if(source == H1) {castlingRights &= ~wk;} else if(source == A1) {castlingRights &= ~wq;} }
+    if(piece == r) { if(source == H8) {castlingRights &= ~bk;} else if(source == A8) {castlingRights &= ~bq;} }
+
+    switch(flag) {
+        case QUIET_FLAG:
+            squareToPiece[target] = piece;
+            break;
+        case DOUBLE_PUSH_FLAG:
+            squareToPiece[target] = piece;
+            enPassant = (side == white) ? target - 8 : target + 8;
+            break;
+        case KING_CASTLE_FLAG:
+            squareToPiece[target] = piece;
+            rookTo = (side == white) ? F1 : F8; rookFrom = (side == white) ? H1 : H8; rookColor = (side == white) ? R : r;
+            pop_bit(pieceBitboards[rookColor], rookFrom); pop_bit(occupancyBitboards[side], rookFrom);
+            set_bit(pieceBitboards[rookColor], rookTo); set_bit(occupancyBitboards[side], rookTo);
+            squareToPiece[rookTo] = rookColor; squareToPiece[rookFrom] = -1;          
+            break;
+        case QUEEN_CASTLE_FLAG:
+            squareToPiece[target] = piece;
+            rookTo = (side == white) ? D1 : D8; rookFrom = (side == white) ? A1 : A8; rookColor = (side == white) ? R : r;
+            pop_bit(pieceBitboards[rookColor], rookFrom); pop_bit(occupancyBitboards[side], rookFrom);
+            set_bit(pieceBitboards[rookColor], rookTo); set_bit(occupancyBitboards[side], rookTo);
+            squareToPiece[rookTo] = rookColor; squareToPiece[rookFrom] = -1;
+            break;
+        case CAPTURE_FLAG:
+            capturedPiece = squareToPiece[target];
+            if (capturedPiece == R) { if (target == H1) {castlingRights &= ~wk;} else if (target == A1) {castlingRights &= ~wq;} }
+            if (capturedPiece == r) { if (target == H8) {castlingRights &= ~bk;} else if (target == A8) {castlingRights &= ~bq;} }
+            pop_bit(pieceBitboards[capturedPiece], target); pop_bit(occupancyBitboards[opponent], target);
+            squareToPiece[target] = piece;
+            break;
+        case EP_CAPTURE_FLAG:
+            int pawnSquare = (side == white) ? target - 8 : target + 8; //gets location of pawn being captured
+            pop_bit(pieceBitboards[(piece + 6) % 12], pawnSquare); pop_bit(occupancyBitboards[opponent], pawnSquare); //(0 + 6) % 12 = 6 (black pawn); (6 + 6) % 12 = 0 (white pawn)
+            squareToPiece[pawnSquare] = -1; squareToPiece[target] = piece;
+            break;
+        case KNIGHT_PROMO_FLAG: case BISHOP_PROMO_FLAG: case ROOK_PROMO_FLAG: case QUEEN_PROMO_FLAG:
+            promotedPiece = (side == white) ? flag - 7 : flag - 1; //if white, goes to 1-4 (N, B, R, Q); if black, goes to 7-10 (n, b, r, q)
+            pop_bit(pieceBitboards[piece], target);
+            set_bit(pieceBitboards[promotedPiece], target); //already set occupancy above switch case
+            squareToPiece[target] = promotedPiece;
+            break;
+        case NP_CAPTURE_FLAG: case BP_CAPTURE_FLAG: case RP_CAPTURE_FLAG: case QP_CAPTURE_FLAG:
+            capturedPiece = squareToPiece[target];
+            if (capturedPiece == R) { if (target == H1) {castlingRights &= ~wk;} else if (target == A1) {castlingRights &= ~wq;} }
+            if (capturedPiece == r) { if (target == H8) {castlingRights &= ~bk;} else if (target == A8) {castlingRights &= ~bq;} }
+            pop_bit(pieceBitboards[piece], target); pop_bit(pieceBitboards[capturedPiece], target); pop_bit(occupancyBitboards[opponent], target);
+
+            promotedPiece = (side == white) ? flag - 11 : flag - 5;
+            set_bit(pieceBitboards[promotedPiece], target); //already set occupancy
+            squareToPiece[target] = promotedPiece;
+            break;
+        default:
+            printf("\nError in make_move(): wrong flag\n");
+            break;
+    }
+
+    occupancyBitboards[both] = occupancyBitboards[white] | occupancyBitboards[black];
+    if(piece == P || piece == p || flag == CAPTURE_FLAG || flag == EP_CAPTURE_FLAG || flag >= NP_CAPTURE_FLAG) {ply = 0;} else {ply++;}
+    if(side == black) {fullMoves++;}
+    if(flag != DOUBLE_PUSH_FLAG) {enPassant = NO_SQUARE;} //if no double pawn push, reset enPassant variable
+
+    side ^= 1;
+    return 1;
+}
+
 void generate_pawn_moves(MoveList *moveList, int side) { //the add_move function already increases count so no need to worry about that in here
     U64 pawnBitboard = (side == white) ? pieceBitboards[P] : pieceBitboards[p];
     int source, target;
@@ -19,11 +104,9 @@ void generate_pawn_moves(MoveList *moveList, int side) { //the add_move function
             source = get_lsb_index(pawnBitboard);
             target = source + 8;
             if(!(target > H8) && !get_bit(occupancyBitboards[both], target)) { //if the target does not go past the board (H8 = 63) and the target square is empty,
-                if(source >= A7 && source <= H7) { //if it's on the 7th rank
-                    add_move(moveList, encode_move(source, target, QUEEN_PROMO_FLAG)); //pawn push one square with promotion
-                    add_move(moveList, encode_move(source, target, ROOK_PROMO_FLAG));
-                    add_move(moveList, encode_move(source, target, BISHOP_PROMO_FLAG));
-                    add_move(moveList, encode_move(source, target, KNIGHT_PROMO_FLAG));        
+                if(source >= A7 && source <= H7) { //if it's on the 7th rank, we can promote
+                    add_move(moveList, encode_move(source, target, QUEEN_PROMO_FLAG)); add_move(moveList, encode_move(source, target, ROOK_PROMO_FLAG));
+                    add_move(moveList, encode_move(source, target, BISHOP_PROMO_FLAG)); add_move(moveList, encode_move(source, target, KNIGHT_PROMO_FLAG));        
                 } else {
                     add_move(moveList, encode_move(source, target, QUIET_FLAG)); //pawn push one square
                     if((source >= A2 && source <= H2) && !get_bit(occupancyBitboards[both], target + 8)) { //double pawn push
@@ -36,10 +119,8 @@ void generate_pawn_moves(MoveList *moveList, int side) { //the add_move function
             while(attacks) {
                 target = get_lsb_index(attacks);
                 if(source >= A7 && source <= H7) { //if on 7th rank, capture and promote
-                    add_move(moveList, encode_move(source, target, QP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, RP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, BP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, NP_CAPTURE_FLAG));
+                    add_move(moveList, encode_move(source, target, QP_CAPTURE_FLAG)); add_move(moveList, encode_move(source, target, RP_CAPTURE_FLAG));
+                    add_move(moveList, encode_move(source, target, BP_CAPTURE_FLAG)); add_move(moveList, encode_move(source, target, NP_CAPTURE_FLAG));
                 } else {
                     add_move(moveList, encode_move(source, target, CAPTURE_FLAG)); //regular capture elsewise
                 }
@@ -53,10 +134,8 @@ void generate_pawn_moves(MoveList *moveList, int side) { //the add_move function
             target = source - 8;
             if(!(target < A1) && !get_bit(occupancyBitboards[both], target)) {
                 if(source >= A2 && source <= H2) {
-                    add_move(moveList, encode_move(source, target, QP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, RP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, BP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, NP_CAPTURE_FLAG));
+                    add_move(moveList, encode_move(source, target, QP_CAPTURE_FLAG)); add_move(moveList, encode_move(source, target, RP_CAPTURE_FLAG));
+                    add_move(moveList, encode_move(source, target, BP_CAPTURE_FLAG)); add_move(moveList, encode_move(source, target, NP_CAPTURE_FLAG));
                 } else {
                     add_move(moveList, encode_move(source, target, QUIET_FLAG)); //pawn push one square
                     if((source >= A7 && source <= H7) && !get_bit(occupancyBitboards[both], target - 8)) {
@@ -68,10 +147,8 @@ void generate_pawn_moves(MoveList *moveList, int side) { //the add_move function
             while(attacks) {
                 target = get_lsb_index(attacks);
                 if(source >= A2 && source <= H2) { //if on 2nd rank, capture and promote
-                    add_move(moveList, encode_move(source, target, QP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, RP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, BP_CAPTURE_FLAG));
-                    add_move(moveList, encode_move(source, target, NP_CAPTURE_FLAG));
+                    add_move(moveList, encode_move(source, target, QP_CAPTURE_FLAG)); add_move(moveList, encode_move(source, target, RP_CAPTURE_FLAG));
+                    add_move(moveList, encode_move(source, target, BP_CAPTURE_FLAG)); add_move(moveList, encode_move(source, target, NP_CAPTURE_FLAG));
                 } else {
                     add_move(moveList, encode_move(source, target, CAPTURE_FLAG));
                 }
@@ -112,16 +189,6 @@ void generate_knight_moves(MoveList *moveList, int side) {
         pop_bit(knightBitboard, source); //pop the knight and move on to the next knight to do
     }
 }
-/*
-8  - - - - - - - -
-7  - - - - - - - -
-6  - 1 - 1 - - - -
-5  1 - - - 1 - - -
-4  - - N - - - - -
-3  1 - - - 1 - - -
-2  - 1 - 1 - - - -
-1  - - - - - - - -
-*/
 
 void generate_bishop_moves(MoveList *moveList, int side) {
     U64 bishopBitboard = (side == white) ? pieceBitboards[B] : pieceBitboards[b];
@@ -169,7 +236,7 @@ void generate_rook_moves(MoveList *moveList, int side) {
     }
 }
 
-void generate_queen_moves(MoveList *moveList, int side) { //fix queen moves
+void generate_queen_moves(MoveList *moveList, int side) {
     U64 queenBitboard = (side == white) ? pieceBitboards[Q] : pieceBitboards[q];
     U64 opponentOccupancy = (side == white) ? occupancyBitboards[black] : occupancyBitboards[white];
     int source, target;
@@ -243,19 +310,6 @@ void generate_king_moves(MoveList *moveList, int side) { //there's only one king
         }
     }
 }
-/*
-typedef enum {
-    A1, B1, C1, D1, E1, F1, G1, H1,     //00, 01, 02, 03, 04, 05, 06, 07,
-    A2, B2, C2, D2, E2, F2, G2, H2,     //08, 09, 10, 11, 12, 13, 14, 15,
-    A3, B3, C3, D3, E3, F3, G3, H3,     //16, 17, 18, 19, 20, 21, 22, 23,
-    A4, B4, C4, D4, E4, F4, G4, H4,     //24, 25, 26, 27, 28, 29, 30, 31,
-    A5, B5, C5, D5, E5, F5, G5, H5,     //32, 33, 34, 35, 36, 37, 38, 39,
-    A6, B6, C6, D6, E6, F6, G6, H6,     //40, 41, 42, 43, 44, 45, 46, 47,
-    A7, B7, C7, D7, E7, F7, G7, H7,     //48, 49, 50, 51, 52, 53, 54, 55,
-    A8, B8, C8, D8, E8, F8, G8, H8,     //56, 57, 58, 59, 60, 61, 62, 63,
-    NO_SQUARE                           //64
-} Square; //board squares
-*/
 
 void generate_moves(MoveList *moveList) {
     moveList -> count = 0;

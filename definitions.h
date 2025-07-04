@@ -53,7 +53,7 @@ typedef enum {wk = 1, wq = 2, bk = 4, bq = 8} CastlingRights; //castling rights
 //the first 6 bits is to encode the original square, the next 6 bits the square it's heading to, and the last 4 bits for any flags such as castling/promotion
 #define get_source(move) ((move) & 0x3F)
 #define get_target(move) (((move) >> 6) & 0x3F)
-#define get_flags(move) ((move) >> 12)
+#define get_flag(move) ((move) >> 12)
 
 //FLAGS WITH 4-BITS (taken from chess programming wiki):
 #define QUIET_FLAG 0

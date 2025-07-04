@@ -6,10 +6,9 @@
 extern MoveList pseudoMoves;
 
 void add_move(MoveList *moveList, Move move);
-//right now we are only generating moves, so we are modifying one MoveList called pseudoMoves while only copying the piece bitboards to find what moves we can make
-void generate_moves(MoveList *moveList);
 
-//therefore we only pass the bitboards itself and not the address
+int make_move(Move move);
+
 void generate_pawn_moves(MoveList *moveList, int side);
 
 void generate_knight_moves(MoveList *moveList, int side);
@@ -21,5 +20,7 @@ void generate_rook_moves(MoveList *moveList, int side);
 void generate_queen_moves(MoveList *moveList, int side);
 
 void generate_king_moves(MoveList *moveList, int side);
+
+void generate_moves(MoveList *moveList); //generate pseudo moves (doesn't check if a move leaves their king in check)
 
 #endif

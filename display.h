@@ -10,11 +10,11 @@
 extern U64 pieceBitboards[12]; //each piece type will have their own bitboard; order is P, N, B, R, Q, K, p, n, b, r, q, k
 extern U64 occupancyBitboards[3]; //contains the location of all pieces of white, black, and both
 
+extern int squareToPiece[64];
+
 extern int side; //side to move
 extern int enPassant; //en Passant square
 extern int castlingRights; //castling rights
-
-extern U64 positionKey; //current set up of Board
 
 extern int fullMoves; //number of full plys played in total in the game
 
@@ -26,6 +26,9 @@ extern char pieceToChar[12];
 extern char *unicode_pieces[12];
 
 void parse_fen(char *fen);
+
+void init_square_to_piece();
+
 void print_bitboard(U64 bitboard); //print a given bitboard in chessboard manner
 void print_board(); //takes all piece bitboards and puts in place the pieces
 

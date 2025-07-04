@@ -5,11 +5,11 @@
 U64 pieceBitboards[12]; //each piece type will have their own bitboard; order is P, N, B, R, Q, K, p, n, b, r, q, k
 U64 occupancyBitboards[3]; //contains the location of all pieces of white, black, and both
 
+int squareToPiece[64]; //keeps track of what piece is in what square; initialized by parse_fen and updated by make_move; -1 if empty, 0-11 for piece type
+
 int side; //side to move
 int enPassant = NO_SQUARE; //en Passant square
 int castlingRights; //castling rights
-
-U64 positionKey; //current set up of Board
 
 int fullMoves; //number of full plys played in total in the game
 
@@ -48,6 +48,20 @@ char *unicode_pieces[12] = { //may have issues if the computer it's running on d
     "\u2659", "\u2658", "\u2657", "\u2656", "\u2655", "\u2654"   // vice versa
 };
 
+
+void init_square_to_piece() {
+    for(int i = 0; i < 64; i++) {squareToPiece[i] = -1;}
+
+    for(int i = P; i <= k; i++) {
+        U64 bitboard = pieceBitboards[i];
+        while(bitboard) {
+            int square = get_lsb_index(bitboard);
+            squareToPiece[square] = i;
+            pop_bit(bitboard, square);
+        }
+    }
+}
+
 /*FEN has 6 fields:
     1. Piece Placement; lowercase for black, uppercase for white
     2. Active Color (b/w/-)
@@ -78,6 +92,8 @@ void parse_fen(char *fen) { //may have issues with unknown characters or overflo
             fen++;
         }
     }
+
+    init_square_to_piece();
 
     fen++; //move to Active Color field
     (*fen == 'w') ? (side = white) : (side = black);
@@ -180,7 +196,9 @@ void print_board() {
 }
 
 void print_move(Move move) { //have to update this function later to deal with flags such as promoted piece
-    printf("%s to %s", squareToCoords[get_source(move)], squareToCoords[get_target(move)]);
+    printf("%s to %s: ", squareToCoords[get_source(move)], squareToCoords[get_target(move)]);
+    for (int i = 15; i >= 0; i--) {printf("%d", (move >> i) & 1);}
+    printf(": %u\n", move);
 }
 
 void print_movelist(MoveList *moveList) {
